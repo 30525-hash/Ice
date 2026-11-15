@@ -1,0 +1,702 @@
+```html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมง้อไอซ์ - ภารกิจหัวใจ</title>
+    <!-- โหลด Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลดฟอนต์ Kanit และ Prompt จาก Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ตั้งค่าฟอนต์หลักและพื้นหลังไล่สีพาสเทลละมุนตา */
+        body {
+            font-family: 'Prompt', 'Kanit', sans-serif;
+            background: 
+                radial-gradient(circle at 12% 18%, rgba(255, 212, 224, 0.72) 0%, transparent 48%),
+                radial-gradient(circle at 88% 15%, rgba(214, 244, 250, 0.78) 0%, transparent 48%),
+                radial-gradient(circle at 15% 88%, rgba(254, 240, 206, 0.78) 0%, transparent 48%),
+                radial-gradient(circle at 85% 85%, rgba(230, 222, 252, 0.75) 0%, transparent 48%),
+                #fcfafb;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .heading-font {
+            font-family: 'Kanit', sans-serif;
+        }
+
+        /* แอนิเมชันลอยนุ่มๆ */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: floatSlow 3s ease-in-out infinite;
+        }
+
+        /* แอนิเมชันเปลี่ยนหน้า */
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .fade-in-content {
+            animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* สไตล์ช่องชิ้นส่วนจิ๊กซอว์ */
+        .puzzle-tile {
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .puzzle-tile:active {
+            transform: scale(0.95);
+        }
+        .puzzle-tile.selected {
+            outline: 3px solid #a14860;
+            outline-offset: -3px;
+            transform: scale(0.96);
+            z-index: 10;
+            box-shadow: 0 0 16px rgba(161, 72, 96, 0.45);
+        }
+
+        /* หัวใจลอยฉลองตอนจบ */
+        .floating-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            animation: heartRise 3s ease-out forwards;
+        }
+        @keyframes heartRise {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.7) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-280px) scale(1.35) rotate(20deg);
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 sm:p-6">
+
+    <!-- การ์ดหลักตรงกลางหน้าจอ -->
+    <main class="relative w-full max-w-[600px] bg-white rounded-[32px] shadow-[0_20px_50px_rgba(140,95,108,0.12)] overflow-hidden transition-all duration-300">
+        
+        <!-- ส่วนหัวของการ์ด (Header สีชมพูอ่อนพาสเทล) -->
+        <header class="relative bg-[#faecec] px-6 sm:px-10 pt-7 pb-6">
+            <!-- ลายน้ำรูปหัวใจมุมขวาบน -->
+            <svg class="absolute -top-2 -right-2 w-20 h-20 text-[#9b898c] opacity-40 pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
+                <path d="M50 88C50 88 12 63.5 12 36.5C12 22.5 23 12 36 12C43.5 12 48 16 50 19.5C52 16 56.5 12 64 12C77 12 88 22.5 88 36.5C88 63.5 50 88 50 88Z"/>
+            </svg>
+
+            <!-- ป้ายแท็กด้านบน -->
+            <div class="inline-flex items-center gap-1.5 bg-white text-[#683743] text-xs sm:text-[13px] font-semibold px-3.5 py-1.5 rounded-full shadow-[0_2px_8px_rgba(104,55,67,0.05)] mb-3">
+                <span>ภารกิจหัวใจ</span>
+                <span class="text-[#683743] text-[11px]">♥</span>
+            </div>
+
+            <!-- หัวข้อใหญ่ -->
+            <h1 class="heading-font text-3xl sm:text-[40px] font-extrabold text-[#683743] tracking-tight leading-tight mb-1.5">
+                เกมง้อไอซ์
+            </h1>
+
+            <!-- คำโปรยใต้หัวข้อ + ไอคอนดอกไม้และประกายดาว -->
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <p id="header-subtitle" class="text-xs sm:text-[14px] text-[#6d5c60] font-normal">
+                    คำขอโทษจากใจ ภาพของเรา และความตั้งใจที่จะเริ่มใหม่ด้วยกัน
+                </p>
+
+                <!-- ไอคอนตกแต่งฝั่งขวา -->
+                <div class="flex items-center gap-1.5 text-[#4a3b3e] ml-auto">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5.5" r="3.2"/>
+                        <circle cx="18.2" cy="10" r="3.2"/>
+                        <circle cx="15.8" cy="17.2" r="3.2"/>
+                        <circle cx="8.2" cy="17.2" r="3.2"/>
+                        <circle cx="5.8" cy="10" r="3.2"/>
+                        <circle cx="12" cy="12" r="2.2" fill="#faecec"/>
+                    </svg>
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C12.6 7.5 16.5 11.4 22 12C16.5 12.6 12.6 16.5 12 22C11.4 16.5 7.5 12.6 2 12C7.5 11.4 11.4 7.5 12 2Z"/>
+                    </svg>
+                </div>
+            </div>
+        </header>
+
+        <!-- ส่วนเนื้อหาสีขาวด้านล่าง -->
+        <section class="bg-white px-5 sm:px-8 py-7 sm:py-9 flex flex-col items-center text-center min-h-[360px] justify-center">
+            
+            <!-- ========================================== -->
+            <!-- ด่านที่ 0: ซองจดหมายใหญ่ๆ กดเคาะสะสมหัวใจ -->
+            <!-- ========================================== -->
+            <div id="cover-envelope-section" class="w-full max-w-md flex flex-col items-center justify-center py-2 fade-in-content">
+                <div class="inline-flex items-center gap-1.5 bg-[#fcf0f0] text-[#683743] text-xs font-semibold px-3.5 py-1 rounded-full mb-4">
+                    <span id="envelope-tap-status">แตะที่ซองจดหมายเพื่อปลดล็อก (0/5) 💗</span>
+                </div>
+
+                <!-- ปุ่มซองจดหมายใหญ่ๆ -->
+                <button type="button" onclick="tapBigEnvelope(event)" class="group relative flex flex-col items-center focus:outline-none cursor-pointer transition-transform duration-150 active:scale-90 mb-4" aria-label="แตะซองจดหมาย">
+                    <div id="envelope-svg-wrap" class="animate-float drop-shadow-[0_14px_24px_rgba(161,72,96,0.22)] transition-transform duration-150">
+                        <svg width="180" height="135" viewBox="0 0 168 126" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- ตัวซองจดหมาย -->
+                            <rect x="4" y="6" width="160" height="114" rx="18" fill="#FCEEEF" stroke="#E8C2CA" stroke-width="3"/>
+                            <!-- พับด้านล่างและด้านข้าง -->
+                            <path d="M10 114L66 66L84 80L102 66L158 114" fill="#F7DCE1"/>
+                            <path d="M10 114L66 66M158 114L102 66" stroke="#E5B8C2" stroke-width="2.5" stroke-linecap="round"/>
+                            <!-- ฝาพับซองด้านบน -->
+                            <path d="M8 12L84 74L160 12" fill="#FAD5DC" stroke="#E5B8C2" stroke-width="2.5" stroke-linejoin="round"/>
+                            <!-- ตราประทับหัวใจสีแดงตรงกลาง -->
+                            <circle cx="84" cy="68" r="22" fill="#FFF7F8" stroke="#F0C4CD" stroke-width="2"/>
+                            <path d="M84 80C84 80 68 69.5 68 59.5C68 54.5 72 51 76.5 51C79.5 51 82.2 52.8 84 55.2C85.8 52.8 88.5 51 91.5 51C96 51 100 54.5 100 59.5C100 69.5 84 80 84 80Z" fill="#D9435F"/>
+                        </svg>
+                    </div>
+                </button>
+
+                <!-- หลอดพลังหัวใจ -->
+                <div class="w-48 h-2.5 bg-[#f5e3e7] rounded-full overflow-hidden mb-4 p-0.5">
+                    <div id="envelope-progress-bar" class="h-full w-0 bg-gradient-to-r from-[#e06c88] to-[#a14860] rounded-full transition-all duration-200"></div>
+                </div>
+
+                <h2 class="text-xl sm:text-2xl font-bold text-[#683743] mb-1">
+                    ถึง... ไอซ์ 💌
+                </h2>
+                <p id="envelope-sub-hint" class="text-xs sm:text-sm text-[#8c7a7f] mb-5">
+                    รัวแตะที่ซองจดหมาย 5 ครั้งเพื่อเปิดดูข้างใน!
+                </p>
+
+                <button type="button" onclick="tapBigEnvelope(event)" class="inline-flex items-center justify-center gap-2 bg-[#a14860] hover:bg-[#8c3b51] active:scale-95 text-white font-medium text-sm sm:text-[15px] px-8 py-3 rounded-full shadow-[0_6px_16px_rgba(161,72,96,0.28)] transition-all duration-200 cursor-pointer">
+                    <span>แตะเคาะซองจดหมาย 💗</span>
+                </button>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ด่านที่ 1: เกมต่อจิ๊กซอว์ภาพโฟโต้บูธของเรา -->
+            <!-- ========================================== -->
+            <div id="puzzle-section" class="hidden w-full max-w-md flex-col items-center fade-in-content">
+                <div class="inline-flex items-center gap-1.5 bg-[#fcf0f0] text-[#683743] text-xs font-semibold px-3 py-1 rounded-full mb-2">
+                    <span>ด่านที่ 1 • ต่อภาพความทรงจำของเรา 🧩</span>
+                </div>
+                
+                <h2 class="text-lg sm:text-xl font-bold text-[#683743] mb-1">
+                    ช่วยต่อภาพของเราให้ครบหน่อยนะ
+                </h2>
+                <p id="puzzle-instruction" class="text-xs sm:text-[13px] text-[#7c6a6f] mb-4">
+                    เลือกรูปคู่ของเราจากในเครื่องเพื่อเริ่มต่อจิ๊กซอว์เป๊ะๆ 100%
+                </p>
+
+                <!-- กล่องเลือกรูปจริงจากเครื่อง (แสดงก่อนเริ่มต่อ) -->
+                <label id="upload-prompt-box" class="w-[265px] h-[350px] sm:w-[285px] sm:h-[380px] bg-[#fcf5f7] border-2 border-dashed border-[#d99aa9] hover:border-[#a14860] hover:bg-[#faecec] rounded-2xl flex flex-col items-center justify-center p-5 mb-4 cursor-pointer transition-all group">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform">
+                        📸
+                    </div>
+                    <span class="text-sm sm:text-base font-bold text-[#683743] mb-1">แตะเพื่อเลือกรูปคู่ของเรา</span>
+                    <span class="text-xs text-[#8c7a7f] text-center leading-relaxed mb-4">
+                        เลือกรูปโฟโต้บูธใบโปรดจากอัลบั้ม<br>เพื่อนำมาต่อเป็นจิ๊กซอว์ของจริง
+                    </span>
+                    <span class="bg-[#a14860] text-white text-xs font-medium px-5 py-2.5 rounded-full shadow-sm">
+                        เลือกรูปจากเครื่อง 💗
+                    </span>
+                    <input type="file" accept="image/*" onchange="handleCustomPhoto(event)" class="hidden">
+                </label>
+
+                <!-- กระดานต่อจิ๊กซอว์ 3x3 (แสดงเมื่อเลือกรูปแล้ว) -->
+                <div id="puzzle-board-wrapper" class="hidden relative bg-[#faecec] p-2.5 rounded-2xl shadow-inner mb-4">
+                    <div id="puzzle-board" class="grid grid-cols-3 gap-1 w-[255px] h-[380px] sm:w-[276px] sm:h-[410px] rounded-xl overflow-hidden bg-white shadow-sm">
+                        <!-- ช่องจิ๊กซอว์จะถูกสร้างด้วย JavaScript -->
+                    </div>
+
+                    <!-- ภาพต้นฉบับสำหรับกดปุ่มดูตัวอย่าง -->
+                    <div id="preview-overlay" class="hidden absolute inset-2.5 rounded-xl overflow-hidden z-20 shadow-lg border-2 border-[#a14860]">
+                        <img id="preview-img" src="202_2.jpg" alt="ภาพต้นฉบับ" class="w-full h-full object-cover">
+                        <div class="absolute bottom-2 inset-x-0 text-center">
+                            <span class="bg-black/65 text-white text-[11px] px-3 py-1 rounded-full">ภาพต้นฉบับของเรา 💕</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- แถบปุ่มตัวช่วยและเปลี่ยนรูป -->
+                <div id="puzzle-controls" class="hidden flex-wrap items-center justify-center gap-2 mb-3">
+                    <button type="button" onmousedown="showPreview(true)" onmouseup="showPreview(false)" onmouseleave="showPreview(false)" ontouchstart="showPreview(true)" ontouchend="showPreview(false)" class="bg-[#fcf0f0] hover:bg-[#f7dfe3] text-[#683743] text-xs font-medium px-3.5 py-2 rounded-full transition cursor-pointer">
+                        👀 กดค้างดูภาพเต็ม
+                    </button>
+                    
+                    <button type="button" onclick="autoHintMove()" class="bg-[#fcf0f0] hover:bg-[#f7dfe3] text-[#683743] text-xs font-medium px-3.5 py-2 rounded-full transition cursor-pointer">
+                        ✨ ตัวช่วยสลับ 1 คู่
+                    </button>
+
+                    <!-- ปุ่มเปลี่ยนรูปคู่จริงจากเครื่อง -->
+                    <label class="bg-white border border-[#e5c5cd] hover:bg-[#fcf0f0] text-[#683743] text-xs font-medium px-3.5 py-2 rounded-full transition cursor-pointer">
+                        <span>📷 เปลี่ยนรูป</span>
+                        <input type="file" accept="image/*" onchange="handleCustomPhoto(event)" class="hidden">
+                    </label>
+                </div>
+
+                <!-- ปุ่มปลดล็อกเปิดจดหมาย (แสดงเมื่อต่อภาพสำเร็จ) -->
+                <button type="button" id="unlock-letter-btn" onclick="goToLetter()" class="hidden mt-1 inline-flex items-center justify-center gap-2 bg-[#a14860] hover:bg-[#8c3b51] active:scale-95 text-white font-medium text-sm sm:text-[15px] px-7 py-3 rounded-full shadow-[0_6px_16px_rgba(161,72,96,0.28)] transition-all duration-200 cursor-pointer">
+                    <span>ต่อสำเร็จแล้ว! เปิดอ่านจดหมาย 💌</span>
+                </button>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ด่านที่ 2: จดหมาย 5 หน้า พร้อมมินิเกมกดโต้ตอบ -->
+            <!-- ========================================== -->
+            <div id="letter-section" class="hidden w-full flex-col items-center">
+                <div id="content-box" class="w-full max-w-md flex flex-col items-center fade-in-content">
+                    
+                    <!-- ไอคอนซองจดหมายหัวใจ -->
+                    <div id="envelope-icon" class="mb-4 animate-float">
+                        <svg width="56" height="42" viewBox="0 0 56 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="1" y="1" width="54" height="40" rx="6" fill="#E3E8EE"/>
+                            <path d="M2 39L22 21L28 26L34 21L54 39" fill="#D5DCE4"/>
+                            <path d="M2 39L22 21M54 39L34 21" stroke="#C5CED8" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M2 3L28 24L54 3" fill="#EDF1F5" stroke="#C5CED8" stroke-width="1.5" stroke-linejoin="round"/>
+                            <path d="M28 31.5C28 31.5 19 25.6 19 19.8C19 16.9 21.3 14.8 23.9 14.8C25.6 14.8 27.1 15.8 28 17.2C28.9 15.8 30.4 14.8 32.1 14.8C34.7 14.8 37 16.9 37 19.8C37 25.6 28 31.5 28 31.5Z" fill="#D9435F"/>
+                        </svg>
+                    </div>
+
+                    <!-- หัวข้อเรื่องของหน้านั้นๆ -->
+                    <h2 id="page-title" class="text-lg sm:text-xl font-bold text-[#683743] mb-3">
+                        จดหมายถึงไอซ์ 💌
+                    </h2>
+
+                    <!-- ข้อความในจดหมาย -->
+                    <p id="page-message" class="text-sm sm:text-[15.5px] leading-relaxed text-[#6d5c60] mb-5 max-w-sm">
+                        ขอบคุณที่ต่อภาพของเราจนสมบูรณ์นะ... พร้อมเปิดอ่านความในใจข้างในหรือยัง? 🌷
+                    </p>
+
+                    <!-- กล่องมินิเกมกดโต้ตอบในแต่ละหน้า -->
+                    <div id="page-minigame-box" class="hidden w-full max-w-xs bg-[#fcf5f7] border border-[#f2dce2] rounded-2xl p-3.5 mb-5 flex-col items-center">
+                        <p id="minigame-label" class="text-xs font-semibold text-[#683743] mb-2">แตะปุ่มด้านล่างเพื่อเติมพลังใจ!</p>
+                        <div class="w-full h-2.5 bg-[#eed8de] rounded-full overflow-hidden mb-2.5">
+                            <div id="minigame-bar" class="h-full w-0 bg-[#a14860] rounded-full transition-all duration-150"></div>
+                        </div>
+                        <button type="button" id="minigame-action-btn" onclick="playPageMiniGame(event)" class="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-[#fff0f4] active:scale-90 text-[#a14860] border border-[#e3b9c5] font-semibold text-xs px-5 py-2 rounded-full shadow-sm transition-all cursor-pointer">
+                            <span>กดส่งหัวใจ 💗</span>
+                        </button>
+                    </div>
+
+                    <!-- ปุ่มหลัก: เปิดจดหมาย -->
+                    <button type="button" id="main-action-btn" onclick="nextPage()" class="inline-flex items-center justify-center gap-2 bg-[#a14860] hover:bg-[#8c3b51] active:scale-95 text-white font-medium text-sm sm:text-[15px] px-7 py-2.5 rounded-full shadow-[0_4px_12px_rgba(161,72,96,0.25)] transition-all duration-200 cursor-pointer">
+                        <span>เปิดจดหมาย</span>
+                        <span class="bg-white/95 text-[#d9435f] text-[10px] leading-none px-1 py-0.5 rounded-[3px] shadow-xs">💌</span>
+                    </button>
+
+                    <!-- ตัวนับหน้า -->
+                    <div id="page-counter" class="text-xs sm:text-[13px] font-medium text-[#7c6a6f] my-4">
+                        1 จาก 5
+                    </div>
+
+                    <!-- ปุ่มรอง: อ่านต่อ -->
+                    <button type="button" id="next-btn" onclick="nextPage()" class="inline-flex items-center justify-center gap-2 bg-[#a14860] hover:bg-[#8c3b51] active:scale-95 text-white font-medium text-sm sm:text-[15px] px-7 py-2.5 rounded-full shadow-[0_4px_12px_rgba(161,72,96,0.25)] transition-all duration-200 cursor-pointer">
+                        <span>อ่านต่อ</span>
+                        <span class="bg-white/95 text-[#d9435f] text-[10px] leading-none px-1 py-0.5 rounded-[3px] shadow-xs">💌</span>
+                    </button>
+
+                    <!-- ปุ่มตอบรับตอนหน้าสุดท้าย -->
+                    <div id="final-choice-area" class="hidden flex-col sm:flex-row items-center justify-center gap-3 mt-2 w-full">
+                        <button type="button" onclick="forgiveSuccess()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#a14860] hover:bg-[#8c3b51] active:scale-95 text-white font-medium text-sm sm:text-[15px] px-7 py-3 rounded-full shadow-[0_6px_16px_rgba(161,72,96,0.3)] transition-all duration-200 cursor-pointer">
+                            <span>หายงอนแล้ว ดีกันนะ 💖</span>
+                        </button>
+                        <button type="button" id="dodge-btn" onmouseover="moveDodgeBtn()" onclick="moveDodgeBtn()" class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#faecec] text-[#683743] font-medium text-sm px-5 py-2.5 rounded-full transition-all duration-150 cursor-pointer">
+                            <span>ยังงอนอยู่ 😤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        // ==========================================
+        // 2. ระบบตรรกะเกมต่อจิ๊กซอว์ 3x3 (รองรับโหลดไฟล์ 202_2.jpg อัตโนมัติเมื่อขึ้นเว็บจริง)
+        // ==========================================
+        let currentPuzzleImageURL = '202_2.jpg';
+        const gridCols = 3;
+        const gridRows = 3;
+        let tiles = [];
+        let selectedTileIndex = null;
+        let isPuzzleSolved = false;
+
+        // ตรวจสอบอัตโนมัติว่าในโฟลเดอร์มีไฟล์รูป 202_2.jpg วางอยู่หรือไม่
+        window.addEventListener('DOMContentLoaded', function() {
+            const testImg = new Image();
+            testImg.onload = function() {
+                // ถ้าเอาขึ้นเว็บและวางไฟล์ 202_2.jpg ไว้คู่กัน ระบบจะตัดจิ๊กซอว์ให้อัตโนมัติทันที
+                initPuzzle('202_2.jpg');
+            };
+            testImg.src = '202_2.jpg';
+        });
+
+        function initPuzzle(imageUrl) {
+            if (!imageUrl) return;
+            currentPuzzleImageURL = imageUrl;
+            document.getElementById('preview-img').src = imageUrl;
+
+            // ซ่อนกล่องอัปโหลด และแสดงกระดานจิ๊กซอว์จริง
+            document.getElementById('upload-prompt-box').classList.add('hidden');
+            document.getElementById('puzzle-board-wrapper').classList.remove('hidden');
+            const controls = document.getElementById('puzzle-controls');
+            controls.classList.remove('hidden');
+            controls.classList.add('flex');
+
+            isPuzzleSolved = false;
+            selectedTileIndex = null;
+            document.getElementById('unlock-letter-btn').classList.add('hidden');
+            document.getElementById('puzzle-instruction').textContent = 'แตะเลือกชิ้นส่วน 2 ช่องเพื่อสลับตำแหน่งให้ถูกต้อง';
+
+            tiles = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+            shuffleTiles();
+            renderPuzzleBoard();
+        }
+
+        function shuffleTiles() {
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = tiles[i];
+                tiles[i] = tiles[j];
+                tiles[j] = temp;
+            }
+            if (tiles.every(function(val, idx) { return val === idx; })) {
+                const temp = tiles[0];
+                tiles[0] = tiles[1];
+                tiles[1] = temp;
+            }
+        }
+
+        function renderPuzzleBoard() {
+            const board = document.getElementById('puzzle-board');
+            board.innerHTML = '';
+
+            tiles.forEach(function(pieceIndex, currentPos) {
+                const tile = document.createElement('div');
+                tile.className = 'puzzle-tile w-full h-full rounded-[4px]';
+                if (selectedTileIndex === currentPos) {
+                    tile.classList.add('selected');
+                }
+
+                const origCol = pieceIndex % gridCols;
+                const origRow = Math.floor(pieceIndex / gridCols);
+
+                tile.style.backgroundImage = 'url("' + currentPuzzleImageURL + '")';
+                tile.style.backgroundSize = (gridCols * 100) + '% ' + (gridRows * 100) + '%';
+                tile.style.backgroundPosition = (origCol * 50) + '% ' + (origRow * 50) + '%';
+
+                tile.onclick = function() {
+                    handleTileClick(currentPos);
+                };
+                board.appendChild(tile);
+            });
+        }
+
+        function handleTileClick(pos) {
+            if (isPuzzleSolved) return;
+
+            if (selectedTileIndex === null) {
+                selectedTileIndex = pos;
+                renderPuzzleBoard();
+            } else if (selectedTileIndex === pos) {
+                selectedTileIndex = null;
+                renderPuzzleBoard();
+            } else {
+                const temp = tiles[selectedTileIndex];
+                tiles[selectedTileIndex] = tiles[pos];
+                tiles[pos] = temp;
+                selectedTileIndex = null;
+                renderPuzzleBoard();
+                checkPuzzleComplete();
+            }
+        }
+
+        function autoHintMove() {
+            if (isPuzzleSolved) return;
+            for (let i = 0; i < tiles.length; i++) {
+                if (tiles[i] !== i) {
+                    const correctPiecePos = tiles.indexOf(i);
+                    const temp = tiles[i];
+                    tiles[i] = tiles[correctPiecePos];
+                    tiles[correctPiecePos] = temp;
+                    selectedTileIndex = null;
+                    renderPuzzleBoard();
+                    checkPuzzleComplete();
+                    break;
+                }
+            }
+        }
+
+        function checkPuzzleComplete() {
+            const solved = tiles.every(function(val, idx) { return val === idx; });
+            if (solved) {
+                isPuzzleSolved = true;
+                document.getElementById('puzzle-instruction').textContent = 'เก่งมาก! ต่อภาพของเราครบสมบูรณ์แล้ว 💖';
+                const unlockBtn = document.getElementById('unlock-letter-btn');
+                unlockBtn.classList.remove('hidden');
+                unlockBtn.classList.add('inline-flex');
+                launchHearts();
+            }
+        }
+
+        function showPreview(show) {
+            const overlay = document.getElementById('preview-overlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function handleCustomPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                initPuzzle(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function goToLetter() {
+            document.getElementById('puzzle-section').classList.add('hidden');
+            const letterSection = document.getElementById('letter-section');
+            letterSection.classList.remove('hidden');
+            letterSection.classList.add('flex');
+            currentPage = 0;
+            renderPage();
+        }
+
+        // ==========================================
+        // 4. เนื้อหาจดหมาย 5 หน้า พร้อมมินิเกมกดโต้ตอบแต่ละหน้า
+        // ==========================================
+        const pages = [
+            {
+                title: "จดหมายถึงไอซ์ 💌",
+                message: "ขอบคุณที่ต่อภาพของเราจนสมบูรณ์นะ... พร้อมเปิดอ่านความในใจข้างในหรือยัง? 🌷",
+                isCover: true
+            },
+            {
+                title: "1. ขอโทษจากใจจริง 🥺",
+                message: "เค้าขอโทษนะที่ทำตัวไม่น่ารักและทำให้ไอซ์ต้องเสียความรู้สึก เค้ามานั่งทบทวนตัวเองดูแล้ว รู้เลยว่าตอนนั้นเค้าใจร้อนและคิดน้อยเกินไปจริง ๆ ไม่มีข้อแก้ตัวใด ๆ เลย นอกจากคำว่าขอโทษที่อยากให้ไอซ์รับรู้ว่าเค้ารู้สึกผิดและแคร์ความรู้สึกของไอซ์มากที่สุด",
+                isCover: false,
+                miniGame: {
+                    label: "กดปัดเมฆความงอนออกไปให้หมด (0/4) ☁️",
+                    btnText: "ปัดเมฆงอนออกไป 💨",
+                    doneText: "ปัดความงอนออกหมดแล้ว เย้! ☀️",
+                    target: 4
+                }
+            },
+            {
+                title: "2. สัญญาว่าจะปรับปรุงตัว 🤍",
+                message: "ต่อไปนี้เค้าสัญญาว่าจะใจเย็นลงให้มากกว่านี้ จะรับฟังไอซ์ให้เข้าใจก่อนพูดหรือทำอะไรลงไป อะไรที่เคยทำให้ไอซ์ไม่สบายใจ เค้าจะค่อย ๆ ปรับและทำให้ดีขึ้นในทุก ๆ วัน ไม่ใช่แค่พูดให้หายงอน แต่จะทำให้ไอซ์เห็นจากการกระทำของเค้าจริง ๆ",
+                isCover: false,
+                miniGame: {
+                    label: "กดเกี่ยวก้อยรับคำสัญญา (0/3) 🤙",
+                    btnText: "กดเกี่ยวก้อยสัญญา 🤍",
+                    doneText: "เกี่ยวก้อยสัญญากันแล้วนะ! 💖",
+                    target: 3
+                }
+            },
+            {
+                title: "3. ความทรงจำของเรา 📸",
+                message: "พอกลับมานั่งดูรูปคู่ของเราทีไร เค้าก็ยิ้มตามทุกทีเลยนะ ทุกช่วงเวลาที่มีไอซ์อยู่ข้าง ๆ มันมีค่าและมีความหมายกับเค้ามากจริง ๆ เค้าไม่อยากให้ความงี่เง่าของเค้ามาทำลายรอยยิ้มที่น่ารักของไอซ์เลยสักนิดเดียว",
+                isCover: false,
+                miniGame: {
+                    label: "รัวกดเติมหลอดความน่ารักให้ไอซ์ (0/5) 🌷",
+                    btnText: "กดส่งความรัก 💗",
+                    doneText: "ความรักเต็ม 100% แล้ว! 🥰",
+                    target: 5
+                }
+            },
+            {
+                title: "4. ดีกันนะคนเก่งของเค้า 💖",
+                message: "ไม่ว่าจะงอนกันกี่ครั้ง เค้าก็ยังอยากมีไอซ์อยู่ด้วยกันไปนาน ๆ เสมอนะ กลับมาคุยกัน ยิ้มให้เค้าเหมือนเดิมเถอะนะไอซ์... เค้ารักไอซ์มาก ๆ เลย หายงอนนะคนดี 🥺🌷",
+                isFinal: true
+            }
+        ];
+
+        let currentPage = 0;
+        let miniGameCount = 0;
+
+        function playPageMiniGame(e) {
+            const data = pages[currentPage];
+            if (!data.miniGame) return;
+
+            miniGameCount++;
+            spawnTapHeart(e);
+
+            const target = data.miniGame.target;
+            const bar = document.getElementById('minigame-bar');
+            const label = document.getElementById('minigame-label');
+            const btn = document.getElementById('minigame-action-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            const pct = Math.min(100, (miniGameCount / target) * 100);
+            bar.style.width = pct + '%';
+
+            if (miniGameCount < target) {
+                label.textContent = data.miniGame.label.replace(/\(\d+\/\d+\)/, '(' + miniGameCount + '/' + target + ')');
+            } else {
+                label.textContent = data.miniGame.doneText;
+                btn.disabled = true;
+                btn.classList.add('opacity-60', 'cursor-default');
+                btn.innerHTML = '<span>ผ่านภารกิจหน้านี้แล้ว ✨</span>';
+                // ปลดล็อกปุ่มอ่านต่อ
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+        }
+
+        function renderPage() {
+            const contentBox = document.getElementById('content-box');
+            const titleEl = document.getElementById('page-title');
+            const msgEl = document.getElementById('page-message');
+            const mainBtn = document.getElementById('main-action-btn');
+            const counterEl = document.getElementById('page-counter');
+            const nextBtn = document.getElementById('next-btn');
+            const finalChoiceArea = document.getElementById('final-choice-area');
+            const miniGameBox = document.getElementById('page-minigame-box');
+            const miniGameLabel = document.getElementById('minigame-label');
+            const miniGameBar = document.getElementById('minigame-bar');
+            const miniGameBtn = document.getElementById('minigame-action-btn');
+
+            contentBox.classList.remove('fade-in-content');
+            void contentBox.offsetWidth;
+            contentBox.classList.add('fade-in-content');
+
+            const data = pages[currentPage];
+            titleEl.textContent = data.title;
+            msgEl.textContent = data.message;
+            counterEl.textContent = (currentPage + 1) + ' จาก ' + pages.length;
+
+            // ตั้งค่ามินิเกมของหน้านั้นๆ
+            miniGameCount = 0;
+            if (data.miniGame) {
+                miniGameBox.classList.remove('hidden');
+                miniGameBox.classList.add('flex');
+                miniGameLabel.textContent = data.miniGame.label;
+                miniGameBar.style.width = '0%';
+                miniGameBtn.disabled = false;
+                miniGameBtn.classList.remove('opacity-60', 'cursor-default');
+                miniGameBtn.innerHTML = '<span>' + data.miniGame.btnText + '</span>';
+            } else {
+                miniGameBox.classList.add('hidden');
+                miniGameBox.classList.remove('flex');
+            }
+
+            if (data.isCover) {
+                mainBtn.classList.remove('hidden');
+                mainBtn.classList.add('inline-flex');
+                nextBtn.classList.remove('hidden');
+                nextBtn.classList.add('inline-flex');
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                finalChoiceArea.classList.add('hidden');
+                finalChoiceArea.classList.remove('flex');
+            } else if (data.isFinal) {
+                mainBtn.classList.add('hidden');
+                mainBtn.classList.remove('inline-flex');
+                nextBtn.classList.add('hidden');
+                nextBtn.classList.remove('inline-flex');
+                finalChoiceArea.classList.remove('hidden');
+                finalChoiceArea.classList.add('flex');
+            } else {
+                mainBtn.classList.add('hidden');
+                mainBtn.classList.remove('inline-flex');
+                nextBtn.classList.remove('hidden');
+                nextBtn.classList.add('inline-flex');
+                // ล็อกปุ่มอ่านต่อจนกว่าจะเล่นมินิเกมหน้านี้จบ
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                finalChoiceArea.classList.add('hidden');
+                finalChoiceArea.classList.remove('flex');
+            }
+        }
+
+        function nextPage() {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn.disabled) return;
+            if (currentPage < pages.length - 1) {
+                currentPage++;
+                renderPage();
+            }
+        }
+
+        function moveDodgeBtn() {
+            const dodgeBtn = document.getElementById('dodge-btn');
+            const randomX = Math.floor(Math.random() * 110) - 55;
+            const randomY = Math.floor(Math.random() * 50) - 25;
+            dodgeBtn.style.transform = 'translate(' + randomX + 'px, ' + randomY + 'px)';
+        }
+
+        function forgiveSuccess() {
+            const titleEl = document.getElementById('page-title');
+            const msgEl = document.getElementById('page-message');
+            const counterEl = document.getElementById('page-counter');
+            const finalChoiceArea = document.getElementById('final-choice-area');
+
+            titleEl.textContent = "เย้! ขอบคุณที่ยกโทษให้นะไอซ์ 🥰💖";
+            msgEl.textContent = "สัญญาว่าจะดูแลและทำตัวน่ารักกับไอซ์ให้ดีที่สุดเลย รักไอซ์ที่สุดในโลก! 🌷✨";
+            counterEl.textContent = "ภารกิจง้อสำเร็จ 100% ♥";
+
+            finalChoiceArea.innerHTML = '<button type="button" onclick="resetGame()" class="inline-flex items-center justify-center gap-2 bg-[#faecec] hover:bg-[#f4dada] text-[#683743] font-medium text-xs sm:text-sm px-6 py-2.5 rounded-full transition-all duration-200 cursor-pointer"><span>เล่นใหม่อีกครั้ง ↺</span></button>';
+
+            launchHearts();
+        }
+
+        function resetGame() {
+            currentPage = 0;
+            envelopeTaps = 0;
+            document.getElementById('envelope-progress-bar').style.width = '0%';
+            document.getElementById('envelope-tap-status').textContent = 'แตะที่ซองจดหมายเพื่อปลดล็อก (0/5) 💗';
+            document.getElementById('envelope-sub-hint').textContent = 'รัวแตะที่ซองจดหมาย 5 ครั้งเพื่อเปิดดูข้างใน!';
+
+            const finalChoiceArea = document.getElementById('final-choice-area');
+            finalChoiceArea.innerHTML = '<button type="button" onclick="forgiveSuccess()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#a14860] hover:bg-[#8c3b51] active:scale-95 text-white font-medium text-sm sm:text-[15px] px-7 py-3 rounded-full shadow-[0_6px_16px_rgba(161,72,96,0.3)] transition-all duration-200 cursor-pointer"><span>หายงอนแล้ว ดีกันนะ 💖</span></button><button type="button" id="dodge-btn" onmouseover="moveDodgeBtn()" onclick="moveDodgeBtn()" class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#faecec] text-[#683743] font-medium text-sm px-5 py-2.5 rounded-full transition-all duration-150 cursor-pointer"><span>ยังงอนอยู่ 😤</span></button>';
+
+            document.getElementById('letter-section').classList.add('hidden');
+            document.getElementById('puzzle-section').classList.add('hidden');
+            document.getElementById('cover-envelope-section').classList.remove('hidden');
+
+            if (currentPuzzleImageURL) {
+                initPuzzle(currentPuzzleImageURL);
+            }
+        }
+
+        function launchHearts() {
+            const symbols = ['💖', '💗', '🌷', '💕', '✨', '🤍'];
+            for (let i = 0; i < 24; i++) {
+                setTimeout(function() {
+                    const heart = document.createElement('div');
+                    heart.className = 'floating-heart';
+                    heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                    heart.style.left = Math.random() * 92 + 'vw';
+                    heart.style.bottom = '8vh';
+                    heart.style.fontSize = (Math.random() * 16 + 18) + 'px';
+                    document.body.appendChild(heart);
+
+                    setTimeout(function() {
+                        heart.remove();
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+    </script>
+</body>
+</html>
+```
